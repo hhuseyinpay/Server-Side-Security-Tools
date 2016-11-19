@@ -1,4 +1,5 @@
-Version control, all alert and suspicious functions check has been disabled for perfonmance reason.
+Version control, all alert and suspicious function checker has been disabled for perfonmance reason.
+
 Usage:
 ----------
 ~ $ python shelldetect.py > file
