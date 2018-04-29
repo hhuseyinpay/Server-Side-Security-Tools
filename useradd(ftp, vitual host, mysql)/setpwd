@@ -1,0 +1,19 @@
+#!/usr/bin/expect
+#
+set USERNAME [lindex $argv 0]
+set PASSWORD [lindex $argv 1]
+
+if { $USERNAME == "" || $PASSWORD == "" }  {
+         puts "Usage:  ./scriptname username password\n"
+         exit 1
+}
+
+spawn /usr/bin/passwd $USERNAME
+expect "Password:"
+send "$PASSWORD\r"
+expect "Password:"
+send "$PASSWORD\r"
+expect eof
+
+set STATUS [wait]
+exit [lindex $STATUS 3]
