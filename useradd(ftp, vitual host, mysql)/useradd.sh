@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Hasan Huseyin Pay 11/04/2018
 
 RED='\033[0;31m'
@@ -18,6 +18,9 @@ MYSQL_HOSTNAME="localhost"
 MYSQL_USERNAME="root"
 MYSQL_PASSWORD="1"
 
+# ana domain
+ROOT_DOMAINNAME="deu.edu.tr"
+
 # Dosyalarin olusacagi dizin
 WEB_DATA_DIR="/var/www"
 
@@ -30,7 +33,8 @@ APACHE_CONF_DIR="/etc/apache2/sites-available"
 # Kullanıcıya mail gonderecek script
 MAIL_SCRIPT_DIR="/home/huseyin"
 
-# passwd'yi kullanmak icin gerekli script. Calistirma yetkisi olması gerekiyor. expect programinin yuklu olmali!
+# passwd'yi kullanmak icin gerekli script. Calistirma yetkisi olması gerekiyor. 
+# expect ve spawn-fcgi programinin yuklu olmali!
 SETPWD_DIR="."
 
 GREP_DIR="/bin/grep"
@@ -59,6 +63,10 @@ else
     webDomain="$webAddress"
     webFolder="$webAddress"
 fi
+
+# 
+webDomain="$webDomain.$ROOT_DOMAINNAME"
+webFolder="$webFolder.$ROOT_DOMAINNAME"
 
 # Path:
 IFS='/'
@@ -189,15 +197,18 @@ done
 
 
 echo "FTP hesabi olusturuluyor..."
+
+webFolder="$webFolder.$ROOT_DOMAINNAME"
+
 useradd -c "`echo $contactEmail | sed 's/@/_at/g'`" -d $WEB_DATA_DIR/$webFolder -s /sbin/nologin -U $ftpUsername
 mkdir -m 555 $WEB_DATA_DIR/$webFolder
-mkdir -m 755 $WEB_DATA_DIR/$webFolder/etc
-mkdir -m 755 $WEB_DATA_DIR/$webFolder/logs
-mkdir -m 755 $WEB_DATA_DIR/$webFolder/www
-chown root:wheel $WEB_DATA_DIR/$webFolder/etc
-chown root:wheel $WEB_DATA_DIR/$webFolder/logs
-chown $ftpUsername:$ftpUsername $WEB_DATA_DIR/$webFolder/www
-chmod g+s $WEB_DATA_DIR/$webFolder/www
+#mkdir -m 755 $WEB_DATA_DIR/$webFolder/etc
+#mkdir -m 755 $WEB_DATA_DIR/$webFolder/logs
+#mkdir -m 755 $WEB_DATA_DIR/$webFolder/www
+#chown root:wheel $WEB_DATA_DIR/$webFolder/etc
+#chown root:wheel $WEB_DATA_DIR/$webFolder/logs
+chown $ftpUsername:$ftpUsername $WEB_DATA_DIR/$webFolder
+chmod g+s $WEB_DATA_DIR/$webFolder
 expect $SETPWD_DIR/setpwd "$ftpUsername" "$ftpPassword"
 
 if [ -n "`echo $webAddress | cut -d '/' -f 2 -s | tr -d ' '`" ]; then
@@ -209,7 +220,7 @@ echo "MySQL hesabi olusturuluyor..."
 echo "CREATE USER $sqlUsername@'%';\nSET PASSWORD FOR ${sqlUsername}@'%' = PASSWORD('${sqlPassword}');\nCREATE DATABASE ${sqlDatabase};\nGRANT ALL PRIVILEGES ON ${sqlDatabase}.* TO ${sqlUsername}@'%';\nFLUSH PRIVILEGES;" | $MYSQL_CLIENT $MYSQL_OPTION -h$MYSQL_HOSTNAME -u$MYSQL_USERNAME -p$MYSQL_PASSWORD
 
 echo "Hesap bilgi e-postasi gonderiliyor..."
-$MAIL_SCRIPT_DIR/send-new-account-mail.sh "$ftpUsername" "$sqlUsername" "$sqlPassword" "$sqlDatabase" "$contactEmail" "$webAddress" "$ftpPassword"
+# $MAIL_SCRIPT_DIR/send-new-account-mail.sh "$ftpUsername" "$sqlUsername" "$sqlPassword" "$sqlDatabase" "$contactEmail" "$webAddress" "$ftpPassword"
 
 
 
@@ -232,16 +243,16 @@ echo "# match this virtual host. For the default virtual host (this file) this" 
 echo "# value is not decisive as it is used as a last resort host regardless." >>$apacheConf
 echo "# However, you must set it for any further virtual host explicitly." >>$apacheConf
 echo "# ServerName www.example.com" >>$apacheConf
-echo "    ServerName  $webDomain.deu.edu.tr" >>$apacheConf
-echo "    ServerAlias  www.$webDomain.deu.edu.tr" >>$apacheConf
-echo "    DocumentRoot $WEB_DATA_DIR/$webDomain.deu.edu.tr" >>$apacheConf
+echo "    ServerName  $webDomain" >>$apacheConf
+echo "    ServerAlias  www.$webDomain" >>$apacheConf
+echo "    DocumentRoot $WEB_DATA_DIR/$webDomain" >>$apacheConf
 echo "    DirectoryIndex index.html index.htm index.php" >>$apacheConf
-echo "    ErrorLog  $ERRORLOG_DIR/$webDomain.deu.edu.tr-error_log" >>$apacheConf
-echo "    CustomLog $ERRORLOG_DIR/$webDomain.deu.edu.tr-access_log common" >>$apacheConf
+echo "    ErrorLog  $ERRORLOG_DIR/$webDomain-error_log" >>$apacheConf
+echo "    CustomLog $ERRORLOG_DIR/$webDomain-access_log common" >>$apacheConf
 echo "    #" >>$apacheConf
 echo "    # Per virtual host PHP settings:" >>$apacheConf
 echo "    #" >>$apacheConf
-echo "    php_admin_value open_basedir "/dev/:/tmp/:$WEB_DATA_DIR/$webDomain.deu.edu.tr"" >>$apacheConf
+echo "    php_admin_value open_basedir "/dev/:/tmp/:$WEB_DATA_DIR/$webDomain"" >>$apacheConf
 echo "    php_flag display_errors off" >>$apacheConf
 echo "	" >>$apacheConf
 echo "	<files xmlrpc.php>" >>$apacheConf
@@ -249,7 +260,7 @@ echo "    	order allow,deny" >>$apacheConf
 echo "    	deny from all" >>$apacheConf
 echo "    </files>" >>$apacheConf
 echo "" >>$apacheConf
-echo "	<Directory $WEB_DATA_DIR/$webDomain.deu.edu.tr/>" >>$apacheConf
+echo "	<Directory $WEB_DATA_DIR/$webDomain/>" >>$apacheConf
 echo "		Options Indexes FollowSymLinks MultiViews" >>$apacheConf
 echo "		AllowOverride all" >>$apacheConf
 echo "		Order allow,deny" >>$apacheConf
